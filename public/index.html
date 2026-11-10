@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6fa">
+  <title>Ежедневник</title>
+  <link rel="icon" href="/icon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><img src="/icon.svg" width="42" height="42" alt=""><div><strong>Ежедневник</strong><small>Личное пространство</small></div></div>
+    <nav aria-label="Основное">
+      <button data-view="calendar">Календарь</button>
+      <button data-view="all">Все записи</button>
+    </nav>
+    <div class="side-heading"><span>Разделы</span><button id="new-section" aria-label="Создать раздел">＋</button></div>
+    <nav id="sections" aria-label="Разделы"></nav>
+    <button id="export" class="export">Скачать данные</button>
+  </aside>
+  <main>
+    <header class="page-head">
+      <div><p id="today-label" class="eyebrow"></p><h1 id="heading">Календарь</h1></div>
+      <button id="new-task" class="primary" disabled>＋ Новая запись</button>
+    </header>
+    <p id="status" role="status">Загрузка…</p>
+    <section id="calendar" hidden>
+      <div class="toolbar">
+        <div class="group"><button id="prev" aria-label="Предыдущий период">‹</button><button id="next" aria-label="Следующий период">›</button><button id="today">Сегодня</button></div>
+        <h2 id="period"></h2>
+        <div id="modes" class="group" aria-label="Вид календаря">
+          <button data-mode="month">Месяц</button><button data-mode="week">Неделя</button><button data-mode="day">День</button>
+        </div>
+      </div>
+      <div id="grid"></div>
+      <div class="agenda">
+        <div class="toolbar"><h2 id="agenda-title"></h2><button id="add-day">＋ На этот день</button></div>
+        <div id="agenda-list"></div>
+      </div>
+    </section>
+    <section id="list" hidden>
+      <div class="toolbar filters">
+        <input id="search" type="search" placeholder="Поиск по названию" aria-label="Поиск по названию">
+        <select id="filter-status" aria-label="Статус">
+          <option value="">Любой статус</option><option value="open">Открытые</option><option value="done">Завершённые</option>
+        </select>
+        <select id="filter-date" aria-label="Планирование">
+          <option value="">Любая дата</option><option value="scheduled">Запланированные</option><option value="unscheduled">Без даты</option>
+        </select>
+        <select id="filter-section" aria-label="Раздел"></select>
+        <button id="edit-section" hidden>Настроить раздел</button>
+      </div>
+      <div id="list-items"></div>
+    </section>
+  </main>
+  <dialog id="task-dialog">
+    <form id="task-form">
+      <div class="dialog-head"><h2 id="task-heading">Новая запись</h2><button type="button" data-close aria-label="Закрыть">×</button></div>
+      <label>Название<input name="title" required maxlength="160"></label>
+      <div class="fields">
+        <label>Тип<select name="kind"><option value="task">Задача</option><option value="event">Встреча или событие</option></select></label>
+        <label>Раздел<select name="sectionId"></select></label>
+      </div>
+      <div class="fields">
+        <label>Дата в календаре<input type="date" name="planned"></label>
+        <label>Крайний срок<input type="date" name="deadline"></label>
+        <label>Начало<input type="time" name="time"></label>
+        <label>Окончание<input type="time" name="endTime"></label>
+      </div>
+      <label>Заметка<textarea name="notes" rows="2" maxlength="4000"></textarea></label>
+      <label class="check"><input name="done" type="checkbox"> Завершено</label>
+      <div class="toolbar"><h3>Подзадачи</h3><button id="add-step" type="button">＋ Добавить</button></div>
+      <div id="steps"></div>
+      <p class="error" role="alert"></p>
+      <div class="dialog-foot">
+        <button id="delete-task" type="button" class="danger" hidden>Удалить</button>
+        <button class="primary" type="submit">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="section-dialog">
+    <form id="section-form">
+      <div class="dialog-head"><h2 id="section-heading">Новый раздел</h2><button type="button" data-close aria-label="Закрыть">×</button></div>
+      <label>Название<input name="name" maxlength="48" required></label>
+      <label>Цвет<select name="color">
+        <option value="blue">Синий</option><option value="green">Зелёный</option><option value="violet">Фиолетовый</option>
+        <option value="orange">Оранжевый</option><option value="pink">Розовый</option>
+      </select></label>
+      <p class="error" role="alert"></p>
+      <div class="dialog-foot"><button type="submit" class="primary">Сохранить</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
