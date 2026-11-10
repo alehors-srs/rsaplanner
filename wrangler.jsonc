@@ -1,0 +1,19 @@
+{
+  "name": "rsaplanner",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-10-01",
+  "preview_urls": false,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rsaplanner",
+      "database_id": "ЗАМЕНИТЕ_НА_ID_D1",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
