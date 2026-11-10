@@ -1,19 +1,25 @@
 {
-  "name": "rsaplanner",
-  "main": "src/worker.mjs",
-  "compatibility_date": "2026-10-01",
-  "preview_urls": false,
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "run_worker_first": true
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "rsaplanner",
-      "database_id": "ЗАМЕНИТЕ_НА_ID_D1",
-      "migrations_dir": "migrations"
-    }
-  ]
+	"name": "rsaplanner",
+	"main": "src/worker.mjs",
+	"compatibility_date": "2026-10-01",
+	"preview_urls": false,
+	"assets": {
+		"directory": "./public",
+		"binding": "ASSETS",
+		"run_worker_first": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "rsaplanner",
+			"database_id": "4428f4f4-8e9c-4248-bafc-078c9780e54d",
+			"migrations_dir": "migrations"
+		},
+		{
+			"binding": "rsaplanner",
+			"database_name": "rsaplanner",
+			"database_id": "4428f4f4-8e9c-4248-bafc-078c9780e54d",
+			"remote": true
+		}
+	]
 }
