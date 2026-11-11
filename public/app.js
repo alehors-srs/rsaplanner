@@ -22,6 +22,8 @@ let currentTask;
 let currentSection;
 let requestVersion = 0;
 let ready = false;
+let calendarDrag;
+let calendarSaving = false;
 const taskDialog = $('task-dialog');
 const taskForm = $('task-form');
 const sectionDialog = $('section-dialog');
@@ -55,10 +57,11 @@ async function api(path, method = 'GET', data) {
 }
 
 async function refresh() {
+  if (calendarDrag || calendarSaving) return;
   const version = ++requestVersion;
   try {
     const result = await api('state');
-    if (version !== requestVersion) return;
+    if (version !== requestVersion || calendarDrag || calendarSaving) return;
     snapshot = result;
     ready = true;
     $('status').textContent = '';
@@ -115,6 +118,73 @@ function renderList() {
   $('list-items').replaceChildren(...(tasks.length ? tasks.map(task => entry(task)) : [element('p', 'Здесь пока нет записей.', 'empty')]));
 }
 
+
+function clearCalendarDrag() {
+  calendarDrag = undefined;
+  for (const node of document.querySelectorAll('.dragging, .drop-target')) {
+    node.classList.remove('dragging', 'drop-target');
+  }
+}
+
+function makeCalendarDraggable(node, task, step) {
+  node.draggable = !calendarSaving;
+  node.addEventListener('dragstart', event => {
+    if (calendarSaving) {
+      event.preventDefault();
+      return;
+    }
+    calendarDrag = { task, stepIndex: step ? task.steps.indexOf(step) : -1 };
+    requestVersion++;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', task.id);
+    node.classList.add('dragging');
+  });
+  node.addEventListener('dragend', clearCalendarDrag);
+}
+
+async function moveCalendarRecord(drag, planned) {
+  const { task, stepIndex } = drag;
+  const original = stepIndex < 0 ? task : task.steps[stepIndex];
+  if (calendarSaving || original.planned === planned) return;
+  const updated = { ...task };
+  if (stepIndex < 0) updated.planned = planned;
+  else updated.steps = task.steps.map((step, index) => index === stepIndex ? { ...step, planned } : step);
+  calendarSaving = true;
+  requestVersion++;
+  $('status').textContent = 'Сохранение новой даты…';
+  let failure;
+  try {
+    await api('tasks/' + task.id, 'PUT', updated);
+  } catch (error) {
+    failure = error;
+  } finally {
+    calendarSaving = false;
+  }
+  await refresh();
+  if (failure) {
+    $('status').textContent = 'Не удалось подтвердить перенос. ' + failure.message;
+  }
+}
+
+function makeCalendarDropTarget(cell, planned) {
+  cell.addEventListener('dragover', event => {
+    if (!calendarDrag || calendarSaving) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    cell.classList.add('drop-target');
+  });
+  cell.addEventListener('dragleave', event => {
+    if (!cell.contains(event.relatedTarget)) cell.classList.remove('drop-target');
+  });
+  cell.addEventListener('drop', event => {
+    if (!calendarDrag || calendarSaving) return;
+    event.preventDefault();
+    const drag = calendarDrag;
+    clearCalendarDrag();
+    moveCalendarRecord(drag, planned);
+  });
+}
+
 function renderCalendar() {
   const date = localDate(selected);
   const start = mode === 'month' ? monday(new Date(date.getFullYear(), date.getMonth(), 1, 12)) : monday(date);
@@ -143,6 +213,7 @@ function renderCalendar() {
       const key = dayKey(cellDate);
       const records = byDate.get(key) || [];
       const cell = element('div', '', 'day');
+      makeCalendarDropTarget(cell, key);
       cell.classList.toggle('outside', mode === 'month' && cellDate.getMonth() !== date.getMonth());
       cell.classList.toggle('selected', selected === key);
       const pick = button(String(cellDate.getDate()), () => {
@@ -158,8 +229,14 @@ function renderCalendar() {
       for (const { task, step } of records.slice(0, 2)) {
         const record = step || task;
         const label = (!step && task.time ? task.time + ' ' : '') + record.title;
-        const chip = button(label, () => openTask(task), 'chip' + (record.done ? ' done' : ''));
+        const section = sectionOf(task.sectionId);
+        const chip = button(
+          label,
+          () => openTask(task),
+          'chip ' + (section?.color || '') + (record.done ? ' done' : '')
+        );
         chip.title = label;
+        makeCalendarDraggable(chip, task, step);
         cell.append(chip);
       }
       if (records.length > 2) cell.append(element('small', 'Ещё ' + (records.length - 2), 'more'));
@@ -169,7 +246,11 @@ function renderCalendar() {
   }
   const dayRecords = byDate.get(selected) || [];
   $('agenda-list').replaceChildren(...(dayRecords.length
-    ? dayRecords.map(({ task, step }) => entry(task, step))
+    ? dayRecords.map(({ task, step }) => {
+      const item = entry(task, step);
+      makeCalendarDraggable(item, task, step);
+      return item;
+    })
     : [element('p', 'На этот день ничего не запланировано.', 'empty')]));
   for (const control of $('modes').querySelectorAll('button')) {
     control.setAttribute('aria-pressed', String(control.dataset.mode === mode));
